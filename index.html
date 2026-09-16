@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Free Live Full-Body AI Swap</title>
+    <script src="https://jsdelivr.net" crossorigin="anonymous"></script>
+    <script src="https://jsdelivr.net" crossorigin="anonymous"></script>
+    <style>
+        body { margin: 0; background: #111; overflow: hidden; font-family: sans-serif; display: flex; flex-direction: column; justify-content: center; align-items: center; height: 100vh; }
+        #webcam { transform: scaleX(-1); position: absolute; width: 100%; height: 100%; object-fit: cover; opacity: 0.25; z-index: 1; }
+        #output_canvas { position: absolute; width: 100%; height: 100%; object-fit: cover; z-index: 2; }
+        #ui-panel { position: absolute; bottom: 30px; z-index: 10; background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(10px); padding: 15px 25px; border-radius: 20px; color: white; text-align: center; max-width: 80%; border: 1px solid rgba(255,255,255,0.1); }
+        h3 { margin: 0 0 5px 0; color: #00FF00; }
+        p { margin: 0; font-size: 0.85rem; color: #ccc; }
+        #loading-screen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #111; z-index: 20; display: flex; flex-direction: column; justify-content: center; align-items: center; color: white; }
+    </style>
+</head>
+<body>
+    <div id="loading-screen"><p>Loading Free AI Models...</p></div>
+    <video id="webcam" autoplay playsinline></video>
+    <canvas id="output_canvas"></canvas>
+    <div id="ui-panel">
+        <h3>Live AI Body Tracker</h3>
+        <p>Prop phone up and step back 6–8 feet so the camera can see your full body.</p>
+    </div>
+    <script>
+        const videoElement = document.getElementById('webcam');
+        const canvasElement = document.getElementById('output_canvas');
+        const canvasCtx = canvasElement.getContext('2d');
+        const loadingScreen = document.getElementById('loading-screen');
+        function resizeCanvas() { canvasElement.width = window.innerWidth; canvasElement.height = window.innerHeight; }
+        window.addEventListener('resize', resizeCanvas); resizeCanvas();
+        const pose = new Pose({ locateFile: (file) => `https://jsdelivr.net/${file}` });
+        pose.setOptions({ modelComplexity: 1, smoothLandmarks: true, minDetectionConfidence: 0.5, minTrackingConfidence: 0.5 });
+        pose.onResults((results) => {
+            loadingScreen.style.display = 'none';
+            canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
+            if (!results.poseLandmarks) return;
+            canvasCtx.fillStyle = '#00FF00';
+            for (const landmark of results.poseLandmarks) {
+                const x = landmark.x * canvasElement.width;
+                const y = landmark.y * canvasElement.height;
+                canvasCtx.beginPath(); canvasCtx.arc(x, y, 6, 0, 2 * Math.PI); canvasCtx.fill();
+            }
+        });
+        const camera = new Camera(videoElement, { onFrame: async () => { await pose.send({image: videoElement}); }, width: 640, height: 480 });
+        camera.start();
+    </script>
+</body>
+</html>
